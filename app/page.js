@@ -1,30 +1,58 @@
-import { supabasePublic } from "@/lib/supabasePublic";
+import { categories, tenders } from "@/lib/mockTenders";
+import TenderList from "./tenders/TenderList";
 
-export const revalidate = 60;
+export default function Home() {
+  const activeCount = tenders.filter((tender) => new Date(tender.deadline) > new Date()).length;
 
-export default async function Home() {
-  const { data, error } = await supabasePublic
-    .from("tenders")
-    .select("id,title,organizer,deadline,created_at,status")
-    .eq("status", "published")
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  if (error) return <pre>{error.message}</pre>;
+  const latest = [...tenders]
+    .sort((a, b) => new Date(b.publishTime) - new Date(a.publishTime))
+    .slice(0, 8);
 
   return (
-    <main>
-      <h1 style={{ marginTop: 0 }}>最新订单</h1>
-      <ul style={{ paddingLeft: 18 }}>
-        {(data || []).map(t => (
-          <li key={t.id} style={{ marginBottom: 10 }}>
-            <a href={`/tender/${t.id}`} style={{ fontWeight: 700 }}>{t.title}</a>
-            <div style={{ fontSize: 12, opacity: 0.75 }}>
-              {t.organizer || "—"} · 截止 {t.deadline ? new Date(t.deadline).toLocaleString() : "—"}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </main>
+    <>
+      <section className="hero">
+        <div className="hero-copy">
+          <p className="eyebrow">B2B-Center 公开招投标信息中文索引</p>
+          <h1>俄罗斯采购机会，一屏筛选。</h1>
+          <p>
+            以中文方式整理俄语采购信息，保留源站编号、分类、发布时间、截止时间与原始链接，方便业务团队快速判断跟进优先级。
+          </p>
+          <div className="hero-actions">
+            <a className="button" href="/tenders">查看信息列表</a>
+            <a className="button secondary" href="https://www.b2b-center.ru/market/" target="_blank" rel="noreferrer">
+              打开源站
+            </a>
+          </div>
+        </div>
+        <div className="stats" aria-label="平台统计">
+          <article className="stat-card">
+            <strong>{tenders.length}</strong>
+            <span>本地样例信息</span>
+          </article>
+          <article className="stat-card">
+            <strong>{activeCount}</strong>
+            <span>仍可关注</span>
+          </article>
+          <article className="stat-card">
+            <strong>{categories.length}</strong>
+            <span>覆盖分类</span>
+          </article>
+          <article className="stat-card">
+            <strong>2026-05-18</strong>
+            <span>样例数据日期</span>
+          </article>
+        </div>
+      </section>
+
+      <div className="section-head">
+        <div>
+          <h2>最新招投标信息</h2>
+          <p>支持关键词和分类筛选，详情页保留源站链接。</p>
+        </div>
+        <a className="source-button" href="/tenders">进入完整列表</a>
+      </div>
+
+      <TenderList initialTenders={latest} />
+    </>
   );
 }

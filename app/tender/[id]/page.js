@@ -1,68 +1,80 @@
-import { supabasePublic } from "@/lib/supabasePublic";
+import { getTenderById, tenders } from "@/lib/mockTenders";
 
-export const revalidate = 60;
+export function generateStaticParams() {
+  return tenders.map((tender) => ({ id: tender.id }));
+}
 
-function formatWechatText(t, siteUrl) {
-  const url = `${siteUrl}/tender/${t.id}`;
-  return [
-    `📌 俄罗斯采购询单`,
-    `【${t.title}】`,
-    ``,
-    `🏢 采购方：${t.organizer || "—"}`,
-    `📦 采购类型：${t.procurement_type || "—"}`,
-    `💰 预算：${t.budget ? String(t.budget) : "—"} ${t.currency || ""}`.trim(),
-    ``,
-    `⏰ 发布时间：${t.publish_time ? new Date(t.publish_time).toLocaleString() : "—"}`,
-    `⏳ 截止时间：${t.deadline ? new Date(t.deadline).toLocaleString() : "—"}`,
-    ``,
-    `🔗 详情页：${url}`,
-  ].join("\n");
+function formatDate(value) {
+  return new Intl.DateTimeFormat("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(value));
 }
 
 export default async function TenderDetail({ params }) {
-  const { id } = params;
-  const { data: t, error } = await supabasePublic
-    .from("tenders")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const { id } = await params;
+  const tender = getTenderById(id);
 
-  if (error) return <pre>{error.message}</pre>;
-  if (!t) return <div>Not found</div>;
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ruradar.com";
-  const wechat = formatWechatText(t, siteUrl);
+  if (!tender) {
+    return (
+      <section className="detail-panel">
+        <a className="back-link" href="/tenders">返回列表</a>
+        <h1>未找到该信息</h1>
+        <p className="summary">请返回列表重新选择。</p>
+      </section>
+    );
+  }
 
   return (
-    <main>
-      <h1 style={{ marginTop: 0 }}>{t.title}</h1>
+    <section className="detail-panel">
+      <div className="detail-actions">
+        <a className="back-link" href="/tenders">返回列表</a>
+        <a className="source-button" href={tender.sourceUrl} target="_blank" rel="noreferrer">
+          打开源站
+        </a>
+      </div>
+      <div className="tag-row">
+        <span className="badge">#{tender.id}</span>
+        <span className="badge">{tender.category}</span>
+        <span className="badge gold">{tender.procurementType}</span>
+      </div>
+      <h1>{tender.title}</h1>
+      <p className="summary">{tender.summary}</p>
 
-      <div style={{ fontSize: 13, lineHeight: 1.7, opacity: 0.85 }}>
-        <div><b>采购方：</b>{t.organizer || "—"}</div>
-        <div><b>类型：</b>{t.procurement_type || "—"}</div>
-        <div><b>预算：</b>{t.budget ? String(t.budget) : "—"} {t.currency || ""}</div>
-        <div><b>发布时间：</b>{t.publish_time ? new Date(t.publish_time).toLocaleString() : "—"}</div>
-        <div><b>截止时间：</b>{t.deadline ? new Date(t.deadline).toLocaleString() : "—"}</div>
-        <div><b>来源链接：</b>{t.source_url ? <a href={t.source_url} target="_blank">打开</a> : "—"}</div>
+      <div className="detail-meta">
+        <article>
+          <small>采购方</small>
+          <span>{tender.organizer}</span>
+        </article>
+        <article>
+          <small>地区</small>
+          <span>{tender.region}</span>
+        </article>
+        <article>
+          <small>分类</small>
+          <span>{tender.category}</span>
+        </article>
+        <article>
+          <small>采购类型</small>
+          <span>{tender.procurementType}</span>
+        </article>
+        <article>
+          <small>发布时间</small>
+          <span>{formatDate(tender.publishTime)}</span>
+        </article>
+        <article>
+          <small>截止时间</small>
+          <span>{formatDate(tender.deadline)}</span>
+        </article>
       </div>
 
-      <h3>中文摘要</h3>
-      <pre style={{ whiteSpace: "pre-wrap", background: "#f6f6f6", padding: 12, borderRadius: 8 }}>
-        {t.content_cn || "—"}
-      </pre>
-
-      <h3>公众号短文（复制粘贴）</h3>
-      <textarea
-        readOnly
-        value={wechat}
-        style={{ width: "100%", height: 200, padding: 10, fontSize: 13 }}
-      />
-      <button
-        onClick={() => navigator.clipboard.writeText(wechat)}
-        style={{ marginTop: 8, padding: "10px 14px", fontWeight: 700 }}
-      >
-        一键复制
-      </button>
-    </main>
+      <div className="original-block">
+        <strong>源站原文标题</strong>
+        <p>{tender.originalTitle}</p>
+      </div>
+    </section>
   );
 }

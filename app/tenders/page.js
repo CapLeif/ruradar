@@ -1,48 +1,20 @@
-import { supabasePublic } from "@/lib/supabasePublic";
+import { tenders } from "@/lib/mockTenders";
+import TenderList from "./TenderList";
 
-export const revalidate = 60;
-
-export default async function Tenders({ searchParams }) {
-  const q = (searchParams?.q || "").trim();
-
-  let query = supabasePublic
-    .from("tenders")
-    .select("id,title,organizer,deadline,created_at")
-    .eq("status", "published")
-    .order("created_at", { ascending: false })
-    .limit(200);
-
-  if (q) query = query.ilike("title", `%${q}%`);
-
-  const { data, error } = await query;
-  if (error) return <pre>{error.message}</pre>;
-
+export default function Tenders() {
   return (
-    <main>
-      <h1 style={{ marginTop: 0 }}>订单列表</h1>
-      <form>
-        <input
-          name="q"
-          defaultValue={q}
-          placeholder="搜索标题关键词"
-          style={{ width: "100%", padding: 10, fontSize: 14 }}
-        />
-      </form>
-
-      <div style={{ marginTop: 12, fontSize: 12, opacity: 0.7 }}>
-        共 {(data || []).length} 条
+    <>
+      <div className="section-head">
+        <div>
+          <p className="eyebrow">本地 mock 数据原型</p>
+          <h1>招投标信息库</h1>
+          <p>按关键词、行业分类和时间维度快速筛选俄罗斯采购机会。</p>
+        </div>
+        <a className="source-button" href="https://www.b2b-center.ru/market/" target="_blank" rel="noreferrer">
+          查看源站
+        </a>
       </div>
-
-      <ul style={{ paddingLeft: 18 }}>
-        {(data || []).map(t => (
-          <li key={t.id} style={{ margin: "10px 0" }}>
-            <a href={`/tender/${t.id}`} style={{ fontWeight: 700 }}>{t.title}</a>
-            <div style={{ fontSize: 12, opacity: 0.75 }}>
-              {t.organizer || "—"} · 截止 {t.deadline ? new Date(t.deadline).toLocaleString() : "—"}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </main>
+      <TenderList initialTenders={tenders} />
+    </>
   );
 }

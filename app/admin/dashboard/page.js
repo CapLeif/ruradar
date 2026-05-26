@@ -1,36 +1,28 @@
-import { cookies } from "next/headers";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { tenders } from "@/lib/mockTenders";
 
-export const dynamic = "force-dynamic";
-
-function mustAuth() {
-  const c = cookies().get("ruradar_admin");
-  if (!c || c.value !== "1") throw new Error("UNAUTHORIZED");
-}
-
-export default async function Dashboard() {
-  try { mustAuth(); } catch { return <a href="/admin">未登录，去登录</a>; }
-
-  const { data, error } = await supabaseAdmin
-    .from("tenders")
-    .select("id,title,status,created_at")
-    .order("created_at", { ascending: false })
-    .limit(200);
-
-  if (error) return <pre>{error.message}</pre>;
-
+export default function Dashboard() {
   return (
-    <main>
-      <h1 style={{ marginTop: 0 }}>订单管理</h1>
-      <a href="/admin/new">+ 新建订单</a>
-      <ul style={{ paddingLeft: 18, marginTop: 12 }}>
-        {(data || []).map(t => (
-          <li key={t.id} style={{ marginBottom: 8 }}>
-            <a href={`/admin/edit/${t.id}`} style={{ fontWeight: 700 }}>{t.title}</a>
-            <span style={{ fontSize: 12, opacity: 0.7 }}> · {t.status}</span>
-          </li>
-        ))}
-      </ul>
-    </main>
+    <section className="detail-panel">
+      <p className="eyebrow">本地原型</p>
+      <h1>数据看板</h1>
+      <p className="summary">
+        第一阶段后台不接入数据库，这里只展示本地 mock 数据概览。后续接入真实数据后，可在这里扩展审核、发布和同步状态。
+      </p>
+      <div className="detail-meta">
+        <article>
+          <small>样例信息</small>
+          <span>{tenders.length} 条</span>
+        </article>
+        <article>
+          <small>数据来源</small>
+          <span>本地 mock</span>
+        </article>
+        <article>
+          <small>自动抓取</small>
+          <span>暂未启用</span>
+        </article>
+      </div>
+      <a className="source-button" href="/tenders">查看前台列表</a>
+    </section>
   );
 }
