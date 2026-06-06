@@ -38,8 +38,8 @@ export default function Home() {
             <span>覆盖分类</span>
           </article>
           <article className="stat-card">
-            <strong>2026-05-18</strong>
-            <span>样例数据日期</span>
+            <strong>{latest[0]?.publishTime ? new Date(latest[0].publishTime).toISOString().slice(0, 10) : "暂无数据"}</strong>
+            <span>最新数据日期</span>
           </article>
         </div>
       </section>
